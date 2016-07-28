@@ -1,0 +1,86 @@
+trigger ContactSalary on Contact (after insert,before update) {
+    
+    Set<ID> setIdAccountUpdate= new Set<ID>();
+    Set<ID> setIdContactUpdate= new Set<ID>();
+    List<Account> listAccountUpdate= new List<Account>();
+    List<Contact> listContactUpdate= new List<Contact>();
+    
+    if((Trigger.isUpdate & Trigger.isBefore)||(Trigger.isInsert & Trigger.isAfter)){
+        For(Contact  iUpdate:Trigger.New){
+            // do something if up 
+            
+               
+                    setIdAccountUpdate.add(iUpdate.AccountId);
+                    setIdContactUpdate.add(iUpdate.id);
+                    listContactUpdate.add(iUpdate);
+       
+            
+        }// end for
+        if(setIdAccountUpdate<>NULL&listContactUpdate<>NULL){ 
+            listAccountUpdate=[SELECT maxSalary__c FROM Account WHERE id IN:setIdAccountUpdate];
+            set<ID> setIdContactUnUpdate= new set<ID>();
+            set<ID> setIdContactTemp=new set<ID>();
+            Contact tempContact= new Contact();
+            Integer summSalaryContact;
+            Integer summSalaryContactRezerv;
+            integer maxSalaryReserv;
+            Boolean flag=true;
+                for(Account accIndex:listAccountUpdate){
+                    summSalaryContact=0;
+                    summSalaryContactRezerv=0;
+                    maxSalaryReserv=0;
+                    for(Contact contIndex:[SELECT Salary__c FROM Contact WHERE AccountID=:accIndex.id]){
+                        summSalaryContactRezerv+=(Integer)contIndex.Salary__c;
+                    } 
+                    maxSalaryReserv=(integer)accIndex.maxSalary__c-summSalaryContactRezerv;
+                    for(Contact contIndex:[SELECT Salary__c FROM Contact WHERE AccountID=:accIndex.id]){
+                        if(setIdContactUpdate.contains(contIndex.id)){
+                           summSalaryContact+=(Integer)trigger.newmap.get(contIndex.id).Salary__c;
+                            tempContact= contIndex;
+                        } else{
+                             summSalaryContact+=(Integer)contIndex.Salary__c;
+                        }  
+                        if( maxSalaryReserv<0|| maxSalaryReserv<(trigger.newmap.get(contIndex.id).Salary__c-contIndex.Salary__c)){
+                            if(Trigger.isUpdate & Trigger.isBefore){
+                              flag=false;   
+                            }
+                           
+                        } else{
+                           maxSalaryReserv-=(integer)(trigger.newmap.get(contIndex.id).Salary__c-contIndex.Salary__c); 
+                        }
+                      if(accIndex.maxSalary__c<summSalaryContact||!flag){
+                               setIdContactTemp.add(tempContact.id);
+                            }  
+                       
+                    }// end for Contact
+                    if (accIndex.maxSalary__c<summSalaryContact){
+                     setIdContactUnUpdate.addAll(setIdContactTemp);
+                    }
+                }// end for  Account
+                 set<id> listIDcontactAfterInsert= new set<id>();
+                 list<contact> listUpdateAfter= new list<contact>();
+                 For(Contact  iUpdate:listContactUpdate){
+                          if(setIdContactUnUpdate.contains(iUpdate.Id)){
+                              if(Trigger.isUpdate & Trigger.isBefore){
+                                  iUpdate.Salary__c=Trigger.oldmap.get(iUpdate.Id).Salary__c;
+                                   System.debug('Sorry, to much salary update!!!'+Trigger.oldmap.get(iUpdate.Id).Salary__c);// or  something else
+                                }
+                               if(Trigger.isInsert & Trigger.isAfter){
+                                   listIDcontactAfterInsert.add(iUpdate.id);
+                                    System.debug('Sorry, to much salary insert !!!');// or  something else
+                                 }
+                              
+                          }
+                     
+                 } // end for
+              listUpdateAfter=[SELECT Salary__c FROM Contact WHERE id IN:listIDcontactAfterInsert];
+            for(contact index:listUpdateAfter){
+                index.Salary__c=0;
+            }
+            update listUpdateAfter;
+        }// end if not NULL lists
+      }// end update
+       
+   
+
+}

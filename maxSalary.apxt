@@ -1,0 +1,17 @@
+trigger MaxSalary on Account (before update) {
+    Integer summSalaryContact;
+    List<Account> listAccountUpdate= new List<Account>();
+    
+    if(Trigger.isUpdate & Trigger.isBefore){
+        for(Account  iUpdate:Trigger.New){
+            summSalaryContact=0;
+           for(Contact contIndex:[SELECT Salary__c FROM Contact WHERE AccountID=:iUpdate.id]){
+                    summSalaryContact+=(integer)contIndex.Salary__c;
+   	    	}
+            if(iUpdate.maxSalary__c<summSalaryContact){
+              iUpdate.maxSalary__c=Trigger.oldmap.get(iUpdate.Id).maxSalary__c; 
+                System.debug('Sorry, to much max salary!!!');// or  something else
+            }
+        }
+    }// end update and before
+}

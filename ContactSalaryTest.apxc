@@ -1,0 +1,50 @@
+@isTest(SeeAllData=false)
+public class ContactSalaryTest {
+    static void createTestData(integer countContacts, id idAccount){
+       list<Contact> testlistContacts= new list<Contact>();
+         for(Integer i=0;i<countContacts;i++) {
+             Contact testContact= new Contact(FirstName='demo'+i,LastName='demo'+i,Salary__c=1000,AccountID=idAccount);
+               testlistContacts.add(testContact);
+            }
+            insert testlistContacts;
+        
+    }
+    @isTest 
+    static void TestContactTrigerMaxSalaryAndAccountMaxSalary(){
+    	List<Account> TestAcc = new List <Account>();
+         for(Integer i=0;i<10;i++)
+         {
+             TestAcc.add(new Account(MaxSalary__c=10000, name = 'Test'+i));
+         }
+		 insert TestAcc;
+        for(Account accIndex:[select id from Account]){
+           ContactSalaryTest.createTestData(11,accIndex.id);  
+        } 
+        integer summSalary=0;
+        list<Contact> listUpdateContact= new  list<Contact>();
+        for(Contact index:[select salary__c from contact where AccountID=:[select id from Account where name='Test1']]){
+            summSalary+=(integer)index.Salary__c;
+            index.Salary__c=2000;
+            listUpdateContact.add(index);
+        }
+        System.assertEquals(10000,summSalary);
+        system.debug(listUpdateContact);
+        update listUpdateContact;
+        
+        for(Contact index:[select salary__c from contact where AccountID=:[select id from Account where name='Test1']]){
+           
+             System.assertNotEquals(2000,index.Salary__c);
+        }
+        
+        // test update account
+            list<account> accUpdate=new list<account>();
+            for(Account accIndex:[select maxSalary__c from Account]){
+                accIndex.maxSalary__c=5000;
+            }
+            update accUpdate;
+            for(Account accIndex:[select maxSalary__c from Account]){
+                System.assertEquals(10000,accIndex.maxSalary__c); 
+            }
+    }
+
+}
