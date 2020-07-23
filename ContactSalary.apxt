@@ -1,4 +1,4 @@
-trigger ContactSalary on Contact (after insert,before update) {
+trigger ContactSalary on Contact  (after insert,before update) {
     
     Set<ID> setIdAccountUpdate= new Set<ID>();
     Set<ID> setIdContactUpdate= new Set<ID>();
