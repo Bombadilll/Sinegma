@@ -1,4 +1,4 @@
-trigger MaxSalary on Account (before update) {
+trigger MaxSalary on Account (before update)  {
     Integer summSalaryContact;
     List<Account> listAccountUpdate= new List<Account>();
     
