@@ -1,4 +1,4 @@
-@isTest(SeeAllData=false)
+@isTest(SeeAllData=false) 
 public class ContactSalaryTest {
     static void createTestData(integer countContacts, id idAccount){
        list<Contact> testlistContacts= new list<Contact>();
